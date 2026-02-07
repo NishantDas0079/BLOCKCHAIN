@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Block #{{ block.index }} - Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="card-title">Block #{{ block.index }}</h1>
+                        <p class="card-text text-muted">{{ block.timestamp }}</p>
+                    </div>
+                    <div>
+                        <a href="{% url 'block_explorer' %}" class="btn btn-outline-primary">← Back to Blocks</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Block Information -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Block Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Block Index</th>
+                        <td><span class="badge bg-primary">{{ block.index }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Timestamp</th>
+                        <td>{{ block.timestamp }}</td>
+                    </tr>
+                    <tr>
+                        <th>Hash</th>
+                        <td><code class="block-hash">{{ block.hash }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Previous Hash</th>
+                        <td><code class="block-hash">{{ block.previous_hash }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Nonce</th>
+                        <td><span class="badge bg-info">{{ block.nonce }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Transaction Count</th>
+                        <td><span class="badge bg-secondary">{{ block.transaction_count }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td><span class="badge bg-success">Confirmed</span></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cryptographic Details -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Cryptographic Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Hash Algorithm</h6>
+                    <p class="mb-1"><small>SHA256: Takes block data and produces 64-character hash</small></p>
+                    <code class="small d-block bg-light p-2 rounded">SHA256(index + transactions + timestamp + previous_hash + nonce)</code>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Proof of Work</h6>
+                    <p class="mb-1"><small>Difficulty: 2 (hash must start with "00")</small></p>
+                    <p class="mb-0"><small>Nonce tried: {{ block.nonce }} times to find valid hash</small></p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Blockchain Link</h6>
+                    <p class="mb-0"><small>This block's hash becomes the next block's previous_hash</small></p>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <div class="d-inline-block p-3 border rounded">
+                        <small>Block #{{ block.index|add:"-1" }}</small><br>
+                        <small>↓ Hash</small><br>
+                        <strong>Block #{{ block.index }}</strong><br>
+                        <small>↓ Hash</small><br>
+                        <small>Block #{{ block.index|add:"1" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transactions -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white d-flex justify-content-between">
+                <h5 class="mb-0">Transactions ({{ block.transaction_count }})</h5>
+                <span class="badge bg-info">Total: {{ block.transaction_count }}</span>
+            </div>
+            <div class="card-body">
+                {% if block.transaction_count > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>TX ID</th>
+                                <th>Sender</th>
+                                <th>Receiver</th>
+                                <th>Amount (BTC)</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in block.transactions %}
+                            <tr>
+                                <td><code class="small">{{ tx.transaction_id|truncatechars:10 }}</code></td>
+                                <td>
+                                    {% if tx.sender == "0" %}
+                                    <span class="badge bg-success">System</span>
+                                    {% else %}
+                                    {{ tx.sender|truncatechars:15 }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ tx.receiver|truncatechars:15 }}</td>
+                                <td><span class="badge bg-warning">{{ tx.amount }}</span></td>
+                                <td><small>{{ tx.timestamp }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <h5>No Transactions</h5>
+                    <p class="text-muted">This block contains no transactions</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

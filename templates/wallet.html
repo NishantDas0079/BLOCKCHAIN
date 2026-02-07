@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}My Wallet - Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title">👛 My Wallet</h1>
+                <p class="card-text text-muted">
+                    Manage your cryptocurrency wallet and view transaction history.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Wallet Summary -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Wallet Summary</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <h2 class="display-4 text-success">฿ {{ balance|floatformat:8 }}</h2>
+                    <p class="text-muted">Current Balance</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Wallet Address</h6>
+                    <code class="d-block p-2 bg-light rounded">{{ wallet.address }}</code>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="copyToClipboard('{{ wallet.address }}')">
+                        Copy Address
+                    </button>
+                </div>
+                
+                <div class="row text-start">
+                    <div class="col-6">
+                        <small>Public Key:</small><br>
+                        <code class="small">{{ wallet.public_key|truncatechars:15 }}</code>
+                    </div>
+                    <div class="col-6">
+                        <small>Created:</small><br>
+                        <small>{{ wallet.created_at|date:"M d, Y" }}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'create_transaction' %}" class="btn btn-blockchain">Send Money</a>
+                    <a href="{% url 'mine_block' %}" class="btn btn-warning">Mine Coins</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Wallet Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="text-primary">{{ total_transactions }}</h3>
+                                <small>Total Transactions</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="text-success">{{ received_count|default:"0" }}</h3>
+                                <small>Received</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="text-danger">{{ sent_count|default:"0" }}</h3>
+                                <small>Sent</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>Wallet Security</h6>
+                    <div class="alert alert-warning">
+                        <small>
+                            <strong>Important:</strong> This is a simulation wallet. In real cryptocurrency:
+                            <ul class="mb-0 mt-1">
+                                <li>Never share your private key</li>
+                                <li>Use hardware wallets for large amounts</li>
+                                <li>Backup your seed phrase securely</li>
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Quick Actions</h6>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#qrModal">
+                            Show QR Code
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="refreshBalance()">
+                            Refresh Balance
+                        </button>
+                        <a href="{% url 'block_explorer' %}" class="btn btn-sm btn-outline-info">
+                            View Blockchain
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction History -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white d-flex justify-content-between">
+                <h5 class="mb-0">Transaction History</h5>
+                <span class="badge bg-info">{{ transaction_history|length }} transactions</span>
+            </div>
+            <div class="card-body">
+                {% if transaction_history %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Block</th>
+                                <th>TX ID</th>
+                                <th>Type</th>
+                                <th>Counterparty</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in transaction_history %}
+                            <tr>
+                                <td><span class="badge bg-secondary">#{{ tx.block_index }}</span></td>
+                                <td><code class="small">{{ tx.transaction_id|truncatechars:10 }}</code></td>
+                                <td>
+                                    {% if tx.receiver == wallet.address %}
+                                    <span class="badge bg-success">Received</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Sent</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if tx.receiver == wallet.address %}
+                                    From: {{ tx.sender|truncatechars:15 }}
+                                    {% else %}
+                                    To: {{ tx.receiver|truncatechars:15 }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge {% if tx.receiver == wallet.address %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if tx.receiver == wallet %}+{% else %}-{% endif %}{{ tx.amount }} BTC
+                                    </span>
+                                </td>
+                                <td><small>{{ tx.timestamp }}</small></td>
+                                <td><span class="badge bg-success">Confirmed</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <h5>No Transactions Yet</h5>
+                    <p class="text-muted">Your transaction history will appear here</p>
+                    <a href="{% url 'create_transaction' %}" class="btn btn-blockchain">Create First Transaction</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Wallet QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <div class="border p-3 d-inline-block">
+                        <!-- Placeholder for QR code -->
+                        <div style="width: 200px; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                            <span class="text-muted">QR Code Placeholder</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="mb-0"><small>Scan to receive payments</small></p>
+                <code class="small d-block mt-2">{{ wallet.address }}</code>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Address copied to clipboard!');
+    });
+}
+
+function refreshBalance() {
+    location.reload();
+}
+</script>
+{% endblock %}

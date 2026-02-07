@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Transaction - Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title">📝 Create Transaction</h1>
+                <p class="card-text text-muted">
+                    Send cryptocurrency to another address. Transaction will be added to pending pool.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Transaction Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Sender Address</label>
+                        <input type="text" class="form-control" name="sender" 
+                               value="{% if user_wallet %}{{ user_wallet.address }}{% endif %}" required>
+                        <div class="form-text">
+                            Your wallet address. If empty, enter any identifier.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Receiver Address</label>
+                        <input type="text" class="form-control" name="receiver" required>
+                        <div class="form-text">
+                            Destination wallet address
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Amount (BTC)</label>
+                        <input type="number" class="form-control" name="amount" step="0.001" min="0.001" value="1.0" required>
+                        <div class="form-text">
+                            Amount to send (minimum: 0.001 BTC)
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="verifyTransaction" required>
+                            <label class="form-check-label" for="verifyTransaction">
+                                I verify that this transaction is valid
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-blockchain btn-lg">
+                            📤 Send Transaction
+                        </button>
+                        <a href="{% url 'index' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Transaction Information</h5>
+            </div>
+            <div class="card-body">
+                <h6>How it works:</h6>
+                <ol class="small">
+                    <li>Transaction created and signed</li>
+                    <li>Added to pending transaction pool</li>
+                    <li>Miners include it in next block</li>
+                    <li>Block mined (Proof of Work)</li>
+                    <li>Transaction confirmed</li>
+                </ol>
+                
+                <hr>
+                
+                <h6>Current Status:</h6>
+                <ul class="small">
+                    <li><strong>Pending Transactions:</strong> {{ pending_transactions|default:"0" }}</li>
+                    <li><strong>Blockchain Difficulty:</strong> {{ difficulty|default:"2" }}</li>
+                    <li><strong>Average Block Time:</strong> ~10-60 seconds</li>
+                </ul>
+                
+                <hr>
+                
+                {% if user_wallet %}
+                <h6>Your Wallet:</h6>
+                <p class="mb-1"><small>Address:</small><br>
+                <code class="small">{{ user_wallet.address }}</code></p>
+                <p class="mb-0"><small>Balance:</small><br>
+                <strong class="text-success">฿ {{ user_wallet.balance }}</strong></p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6>Need test addresses?</h6>
+                <p class="small mb-2">Try these:</p>
+                <ul class="small">
+                    <li><code>alice_wallet_123</code></li>
+                    <li><code>bob_wallet_456</code></li>
+                    <li><code>charlie_wallet_789</code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

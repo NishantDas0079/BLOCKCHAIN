@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Mine Block - Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title">⛏️ Mine Block</h1>
+                <p class="card-text text-muted">
+                    Mine pending transactions into a new block using Proof of Work.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Mining Information</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_tx_count > 0 %}
+                <div class="alert alert-info">
+                    <h5>Ready to Mine!</h5>
+                    <p class="mb-0">
+                        There are <strong>{{ pending_tx_count }}</strong> pending transactions waiting to be mined.
+                        Mining reward: <strong>{{ block_reward }} BTC</strong>
+                    </p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Miner Address</label>
+                        <input type="text" class="form-control" 
+                               value="{% if user.wallet %}{{ user.wallet.address }}{% else %}{{ user.username }}{% endif %}" 
+                               readonly>
+                        <div class="form-text">
+                            You will receive mining reward at this address
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirmMine" required>
+                            <label class="form-check-label" for="confirmMine">
+                                I understand mining consumes computational resources
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            ⛏️ Start Mining (Difficulty: {{ difficulty }})
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-warning">
+                    <h5>No Transactions to Mine</h5>
+                    <p class="mb-0">
+                        There are no pending transactions. Create some transactions first!
+                    </p>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'create_transaction' %}" class="btn btn-blockchain">Create Transaction</a>
+                    <a href="{% url 'index' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Mining Process</h5>
+            </div>
+            <div class="card-body">
+                <h6>Proof of Work Steps:</h6>
+                <ol>
+                    <li>Collect pending transactions</li>
+                    <li>Create block header with previous hash</li>
+                    <li>Find nonce such that: <code>SHA256(block + nonce)</code> starts with {{ difficulty }} zeros</li>
+                    <li>When found, broadcast block to network</li>
+                    <li>Receive mining reward ({{ block_reward }} BTC)</li>
+                </ol>
+                
+                <div class="alert alert-secondary">
+                    <small>
+                        <strong>Note:</strong> This is simulation mining. Real Bitcoin mining requires specialized hardware (ASICs) and significant electricity.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Mining Statistics</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Difficulty</th>
+                        <td><span class="badge bg-danger">{{ difficulty }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Target Hash</th>
+                        <td><code>00{{ "?" * (difficulty-2) }}...</code></td>
+                    </tr>
+                    <tr>
+                        <th>Block Reward</th>
+                        <td><span class="badge bg-warning">{{ block_reward }} BTC</span></td>
+                    </tr>
+                    <tr>
+                        <th>Pending TX</th>
+                        <td><span class="badge bg-info">{{ pending_tx_count }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Your Address</th>
+                        <td>
+                            <small>
+                                {% if user.wallet %}
+                                {{ user.wallet.address|truncatechars:15 }}
+                                {% else %}
+                                {{ user.username }}
+                                {% endif %}
+                            </small>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6>Mining Difficulty Explained</h6>
+                <p class="small">
+                    Difficulty {{ difficulty }} means the hash must start with {{ difficulty }} zeros.
+                    Each increase in difficulty makes mining exponentially harder.
+                </p>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar bg-success" style="width: 30%;">Easy</div>
+                    <div class="progress-bar bg-warning" style="width: 40%;">Medium</div>
+                    <div class="progress-bar bg-danger" style="width: 30%;">Hard</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
